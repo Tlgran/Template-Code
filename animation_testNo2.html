@@ -1,0 +1,439 @@
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html,
+    body {
+      min-width: 100%;
+      min-height: 100%;
+      height: 100%;
+      position: relative;
+      margin: 0;
+      display: flex;
+      flex-direction:column;
+      flex:1;
+    }
+    
+    .line-container {
+      position: absolute;
+      left: 0;
+      top: 0;
+      min-width: 100%;
+      min-height: 100%;
+      stroke: rgb(255, 0, 0);
+      stroke-width: 2;
+    }
+    
+    .box,
+    .test{
+      width: 50px;
+      height: 50px;
+      background-color: gray;
+      position: absolute;
+      transition: all 10s;
+      left: 0;
+      top: 0;
+    }
+
+    #NAS {
+      width: min-content;
+      height: 120px;
+      background-color: lightgray;
+      position: relative;
+      display: block ruby;
+      padding: 1%;
+      margin-top: auto;
+      transition: all 1s;
+      opacity: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <svg class="line-container">
+      <path stroke="blue" stroke-width="2" fill="none" /> 
+      <!--<line></line>-->
+  </svg>
+
+  <!--Node Availability Stage-->
+ <div id="NAS">
+ </div>
+
+
+  <script>
+    /* DOM helpers */
+    const tag = (name, props = {}) => Object.assign(document.createElement(name), props);
+    const elStyle = (el, style) => (Object.assign(el.style, style), el);
+    const elData = (el, data) => (Object.assign(el.dataset, data), el);
+    const append = (par, ...sibs) => {
+      for (const sib of sibs) {
+        par.appendChild(sib)
+      }
+      return par;
+    };
+    const parsePixel = (pxUnit) => parseFloat(pxUnit.slice(0, -2));
+    const toPixel = (number) => number + "px";
+    const getComputedProps = (element) => {
+      const computedStyles = window.getComputedStyle(element);
+      return {
+        x: parsePixel(computedStyles["left"]),
+        y: parsePixel(computedStyles["top"]),
+        width: parsePixel(computedStyles["width"]),
+        height: parsePixel(computedStyles["height"]),
+      };
+    };
+
+    const ANIM_DURATION = 200;
+    //This constant is parent Node properties
+    const INITIAL_STATE = {
+      x: 10,
+      y: 10,
+      a: 0,
+      width: 200,
+      height: 100,
+      scene: 1
+    }
+    //This constant is for childs
+    const NODE_DIMENSION = {
+      //Here it takes x, y, width, height of parent Node
+      x: INITIAL_STATE.x,
+      y: INITIAL_STATE.y,
+      width: INITIAL_STATE.width,
+      height: INITIAL_STATE.height,
+      scene: 1,
+
+      //Here it give first Child Node properties
+      children: [{
+        x: 500,
+        y: 10,
+        width: INITIAL_STATE.width,
+        height: INITIAL_STATE.height,
+        scene: 1,
+        children: []
+      },
+
+	{
+        x: 600,
+        y: 200,
+        width: INITIAL_STATE.width,
+        height: INITIAL_STATE.height,
+        scene: 1,
+
+	//Here it gives second Child Node properties
+	children: [{
+	  x: 100,
+          y: 400,
+          width: INITIAL_STATE.width,
+          height: INITIAL_STATE.height,
+          scene: 1,
+	}]
+      },
+
+	{
+        x: 250,
+        y: 450,
+        width: INITIAL_STATE.width,
+        height: INITIAL_STATE.height,
+        scene: 1,
+
+	 //Here it give third Child Node properties
+	children: [{
+	  x: 100,
+          y: 400,
+          width: INITIAL_STATE.width,
+          height: INITIAL_STATE.height,
+          scene: 1,
+	}]
+      },
+
+	{
+        x: 500,
+        y: 400,
+        width: INITIAL_STATE.width,
+        height: INITIAL_STATE.height,
+        scene: 1,
+
+	 //Here it give 4ed Child Node properties
+	children: [{
+	  x: 100,
+          y: 400,
+          width: INITIAL_STATE.width,
+          height: INITIAL_STATE.height,
+          scene: 1,
+	}]
+      },
+
+	//This is same thing for second childs
+	{
+        x: 10,
+        y: 500,
+        width: INITIAL_STATE.width,
+        height: INITIAL_STATE.height,
+        scene: 1,
+        children: [{
+          x: 100,
+          y: 400,
+          width: INITIAL_STATE.width,
+          height: INITIAL_STATE.height,
+          scene: 1,
+        }]
+      }]
+    }
+
+    const NAS =  document.getElementById("NAS")
+    const Edges = (() => {
+      const lineContainer = document.querySelector(".line-container");
+      const edges = [];
+
+      //This function animate everything
+      function animate(fromNode, toNode, line) {
+	//This for Nodes
+        const fromProps = getComputedProps(fromNode);
+        const toProps = getComputedProps(toNode);
+
+	//This variables draw Lines
+        let x1 = fromProps.x + fromProps.width / 2,
+          y1 = fromProps.y + fromProps.height / 2,
+          x2 = toProps.x + toProps.width / 2,
+          y2 = toProps.y + toProps.height / 2;
+        var controls = {
+          x1: (((x2 - x1) / 2) / 2) + x1,
+          y1: y1 - 20,
+          x2: x2 - (((x2 - x1) / 2) / 2),
+          y2: y2 - 20
+        }
+	//This line connect Lines to Nodes
+        line.setAttribute("d", `M ${x1} ${y1} C ${controls.x1} ${controls.y1} ${controls.x2} ${controls.y2} ${x2} ${y2}`);
+	
+        window.requestAnimationFrame(function() {
+          animate(fromNode, toNode, line)
+        });
+      }
+      //This for Childs
+      return {
+        draw(box1, box2) {
+          const exampleLine = lineContainer.children[0];
+          const line = exampleLine.cloneNode();
+          animate(box1, box2, line)
+          lineContainer.append(line)
+          edges.push(line)
+        },
+	//This function hide unusefull Nodes
+        hide() {
+          for (const edge of edges) {
+            edge.style.display = "none", ANIM_DURATION / 2
+          }
+        }
+      }
+
+    })()
+
+    const Scenes = (() => {
+      return {
+        first(element) {
+          elStyle(element, {
+            display: "flex"
+          })
+          //This one fill Nodes by image
+          const img = append(elStyle(tag("div"), {
+            "display": "flex",
+            "align-items": "center",
+            "width": "50%",
+            "padding": "10px"
+          }), elStyle(tag("IMG", {
+            src: "https://ehayq.am/db/get?id=d324bedf-6e2d-4fb5-a8d5-b6904e5354bf",
+
+          }), {
+            "width": "100%"
+          }))
+	  //This one fill Nodes by Text information
+          const content = append(elStyle(tag("DIV"), {
+              display: "flex",
+              flexDirection: "column",
+              textWrap: "wrap",
+              color: "white",
+              width: "50%",
+              "font-size": "10px"
+            }), elStyle(tag("h3", {
+              "text-align": "center",
+              innerHTML: "Ընկերութիւն",
+            }), {
+              width: "100%",
+              textAlign: "center"
+            }),
+            elStyle(tag("p", {
+              innerHTML: "Ընկերութեան մասին տեղեկութիւն"
+            }), {
+              marginTop: "17px"
+            })
+          )
+          element.append(img)
+          element.append(content)
+        }
+      }
+    })()
+
+    const Boxes = (() => {
+      let ROOT_NODE = undefined;
+      const boxes = [];  
+      const NAS_Children = []
+      const modeClasses = {
+        normal: ["box"],	
+        reserve: ["test"]
+      }
+
+      //This function make Nodes push (MAYBE)
+      function moveBox(box, x, y) {
+        setTimeout(() => {
+          box.style.left = toPixel(x);
+          box.style.top = toPixel(y)
+        })
+      }
+      
+      //This make Child Node to Parent Node
+      function makeRoot(box) {
+        ROOT = {
+          node: box,
+
+        }
+        moveBox(box, INITIAL_STATE.x, INITIAL_STATE.y)
+	
+	const Root = ROOT_NODE.classList.add('root');
+	NAS_Children.push(Root)
+      }
+
+      //Here will be function to make roots go to history part
+      function RootCash(Root, NAS_Children) {
+	NAS.style.opacity = 1;
+	//let x = "100%";
+	//NAS.style.width = x;
+
+	NAS.appendChild(ROOT_NODE)
+	ROOT_NODE.style.position = "static"
+      }
+
+      //This one make unuseful Nodes hide
+      function hideNode(box) {
+	moveBox(box, window.innerWidth, window.innerHeight)
+	setTimeout(() => box.style.display = "none", ANIM_DURATION)
+      }
+
+      //This one connect Child Nodes with Parent Node (MAYBE)
+      function connectBoxes(box) {
+	if (ROOT_NODE) Edges.draw(ROOT_NODE, box)
+      }
+      const nodeClass = ["box", "test"]
+      function createNode(box) {
+	      const element =
+		elStyle(tag('div', {
+		  className: modeClasses.normal,
+		}), {
+		  transition: `all ${
+		  ANIM_DURATION / 500
+		}s linear`,
+		  left: toPixel(INITIAL_STATE.x),
+		  top: toPixel(INITIAL_STATE.y),
+		  width: toPixel(box.width),
+		  height: toPixel(box.height)
+		})
+		return element
+      }
+		      
+      function removeClassName(box){
+	const ando = document.querySelector(".root")
+	ando.classList.remove(modeClasses.normal)
+	ando.classList.add(modeClasses.reserve)
+
+	createNode(ando, nodeClass)
+
+      }
+
+
+      //This function give Nodes their properties and draw them
+      function drawNode(box) {
+	const element = createNode(box)
+
+        append(document.body, element)
+        Scenes.first(element)
+        box.element = element;
+        addEvents(box);
+        // To animate
+        moveBox(element, box.x, box.y)
+        return element
+      }
+
+      function Functionality(box, element){
+	drawNode(box)
+
+        boxes.push(element)
+        connectBoxes(element)
+      }
+
+
+      function addEvents(node) {
+        node.element.addEventListener('click', () => onNodeSelect(node))
+      }
+
+      //This function make correct Nodes to hide
+      function disperseNodes(nodes, Root) {
+        for (const node of nodes) {
+          if(node == ROOT_NODE) continue;
+          hideNode(node)
+	  RootCash()
+        }
+      }
+
+      //This function give properties and draw Child Nodes
+      function drawChildren(node) {
+        ROOT_NODE = node.element;
+        for (const box of node.children) {
+          const element = drawNode(box);
+	  Functionality(box, element);
+        }
+      }
+
+      //This function understand what to do when you clicked in your Node
+      function onNodeSelect(node) {
+        const clickedBoxIndex = boxes.indexOf(node.element)
+        const restBoxes = boxes;
+        if (clickedBoxIndex > -1) restBoxes.splice(clickedBoxIndex, 1);
+        Edges.hide()
+        makeRoot(node.element)
+        disperseNodes(restBoxes)
+        drawChildren(node)
+	removeClassName()
+      }
+
+      //This one create parent Node
+      return {
+        draw(nodeStates) {
+	  if (!ROOT_NODE) {
+	    ROOT_NODE = drawNode(nodeStates)
+	  }
+          for (const box of nodeStates.children) {
+	    const element = drawNode(box);
+            Functionality(box, element);
+          }
+        },
+        getAll() {
+          return boxes;
+        },
+      }
+    })()
+    //Make first Nodes draw
+    Boxes.draw(NODE_DIMENSION)
+  </script>
+</body>
+
+</html>
+
+
+<!--bf10a622-c825-436e-ae0c-1bbf465efc83-->
