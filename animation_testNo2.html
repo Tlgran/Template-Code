@@ -371,7 +371,6 @@
       }
 
       function Functionality(box, element){
-	drawNode(box)
 
         boxes.push(element)
         connectBoxes(element)
@@ -409,7 +408,7 @@
         makeRoot(node.element)
         disperseNodes(restBoxes)
         drawChildren(node)
-	removeClassName()
+	      removeClassName()
       }
 
       //This one create parent Node
